@@ -82,9 +82,4 @@
 @media (min-width: 768px) {
   body { max-width: 100% !important; margin: 0 !important; }
   .bottom-nav { max-width: 100% !important; left: 0 !important; transform: none !important; }
-  .meals-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-@media (max-width: 420px) {
-  .meals-grid { grid-template-columns: 1fr; }
 }
