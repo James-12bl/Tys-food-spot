@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ty's Food Spot - Menu</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="menu.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <header class="main-header">
+    <button class="menu-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+    <div class="logo">
+      <div class="logo-text">Ty's</div>
+      <div class="logo-sub">MENU</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="location.href='cart.html'">
+        <i class="fas fa-shopping-bag"></i>
+        <span class="badge cart-badge" style="display:none">0</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="search-bar" style="margin-top:8px">
+    <i class="fas fa-search search-icon"></i>
+    <input type="text" id="menuSearch" placeholder="Search for a meal..." onkeyup="filterMenu()">
+    <button class="filter-btn"><i class="fas fa-sliders-h"></i></button>
+  </div>
+
+  <div class="filter-chips" id="filterChips">
+    <button class="chip active" data-cat="all" onclick="setCategory('all')">All</button>
+    <button class="chip" data-cat="rice" onclick="setCategory('rice')">Rice</button>
+    <button class="chip" data-cat="pasta" onclick="setCategory('pasta')">Pasta</button>
+    <button class="chip" data-cat="grills" onclick="setCategory('grills')">Grills</button>
+    <button class="chip" data-cat="soups" onclick="setCategory('soups')">Soups</button>
+    <button class="chip" data-cat="drinks" onclick="setCategory('drinks')">Drinks</button>
+  </div>
+
+  <div class="section-header">
+    <h2 class="section-title" id="menuTitle">All Meals</h2>
+    <span style="font-size:12px;color:var(--text-muted)" id="mealCount">0 items</span>
+  </div>
+  <div class="meals-grid" id="menuMeals"></div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i class="fas fa-home"></i>Home</a>
+    <a href="menu.html" class="nav-item active"><i class="fas fa-utensils"></i>Menu</a>
+    <a href="gallery.html" class="nav-item"><i class="fas fa-images"></i>Gallery</a>
+    <a href="cart.html" class="nav-item"><i class="fas fa-shopping-cart"></i>Cart</a>
+    <a href="contact.html" class="nav-item"><i class="fas fa-envelope"></i>Contact</a>
+  </nav>
+
+  <script src="main.js"></script>
+  <script src="menu.js"></script>
+</body>
+</html>

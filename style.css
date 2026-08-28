@@ -1,0 +1,280 @@
+/* ========== GLOBAL STYLES ========== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #1a3c1a;
+  --primary-light: #2d5a2d;
+  --accent: #e8913a;
+  --accent-hover: #d4802f;
+  --bg: #f5f5f0;
+  --white: #ffffff;
+  --text: #1a1a1a;
+  --text-light: #666666;
+  --text-muted: #999999;
+  --border: #e0e0e0;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --transition: all 0.3s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 90px;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ========== HEADER ========== */
+.main-header {
+  background: var(--white);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+.menu-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: var(--transition);
+}
+.menu-btn:hover { background: var(--primary-light); transform: scale(1.05); }
+.logo { text-align: center; }
+.logo-text {
+  font-family: 'Brush Script MT', cursive;
+  font-size: 32px;
+  color: var(--accent);
+  line-height: 1;
+}
+.logo-sub {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 2px;
+  margin-top: -4px;
+}
+.logo-tagline {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.icon-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  position: relative;
+  transition: var(--transition);
+}
+.icon-btn:hover { background: var(--primary-light); transform: scale(1.05); }
+.badge {
+  position: absolute;
+  top: -2px; right: -2px;
+  background: var(--accent);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========== BOTTOM NAV ========== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--primary);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 12px;
+  z-index: 100;
+  border-radius: 20px 20px 0 0;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 12px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.nav-item i { font-size: 20px; }
+.nav-item.active { color: var(--accent); }
+.nav-item:hover { color: var(--accent); }
+
+/* ========== SECTION TITLES ========== */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  margin: 24px 0 14px;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.see-all {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.see-all:hover { text-decoration: underline; }
+
+/* ========== MEAL CARD ========== */
+.meal-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  position: relative;
+}
+.meal-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.meal-img-wrap {
+  position: relative;
+  height: 140px;
+  overflow: hidden;
+}
+.meal-img-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: var(--transition);
+}
+.meal-card:hover .meal-img-wrap img { transform: scale(1.05); }
+.meal-badge {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: var(--primary);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.add-btn {
+  position: absolute;
+  bottom: 10px; right: 10px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--primary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+.add-btn:hover { background: var(--accent); color: var(--white); transform: scale(1.1); }
+.meal-info { padding: 12px; }
+.meal-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meal-desc {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.meal-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.meal-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.meal-rating i { color: #ffc107; font-size: 11px; }
+
+/* ========== TOAST ========== */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--primary);
+  color: var(--white);
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 200;
+  opacity: 0;
+  transition: all 0.4s ease;
+  box-shadow: var(--shadow-lg);
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (min-width: 768px) {
+  body { max-width: 100%; margin: 0; }
+  .bottom-nav { max-width: 100%; left: 0; transform: none; }
+}
