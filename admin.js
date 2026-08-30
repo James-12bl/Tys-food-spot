@@ -20,6 +20,25 @@ const DEFAULT_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w
 let allMeals = [], allGallery = [], allExtras = [], allSides = [];
 let editingMealId = null, editingGalleryId = null;
 
+function setMealDebug(message, type = 'info') {
+  const panel = document.getElementById('mealDebugPanel');
+  if (!panel) return;
+
+  const line = document.createElement('div');
+  line.className = `meal-debug-line ${type}`;
+  line.textContent = message;
+  panel.appendChild(line);
+  panel.classList.add('visible');
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function clearMealDebug() {
+  const panel = document.getElementById('mealDebugPanel');
+  if (!panel) return;
+  panel.innerHTML = '';
+  panel.classList.remove('visible');
+}
+
 function updateStats() {
   const mealsStat = document.getElementById('statMeals');
   const popularStat = document.getElementById('statPopular');
@@ -48,39 +67,88 @@ async function loadAllData() {
 
 async function handleAddMeal(e) {
   e.preventDefault();
+  clearMealDebug();
+  console.log('[DEBUG] handleAddMeal start');
+  setMealDebug('Meal submit started.', 'info');
+
+  const name = document.getElementById('mName').value.trim();
+  const price = Number(document.getElementById('mPrice').value);
+  const desc = document.getElementById('mDesc').value.trim();
+  const category = document.getElementById('mCategory').value;
+  const rating = Number(document.getElementById('mRating').value);
+  const popular = document.getElementById('mPopular').checked;
+  const extras = getSelectedExtras();
+  const sides = getSelectedSides();
+  const fileInput = document.getElementById('mImageFile');
+
+  console.log('[DEBUG] meal form values', { name, price, desc, category, rating, popular, extras, sides, fileSelected: !!(fileInput && fileInput.files && fileInput.files[0]) });
+  setMealDebug(`Values: name="${name || '(empty)'}", price=${price}, category="${category || '(empty)'}", rating=${rating}, extras=${extras.length}, sides=${sides.length}.`, 'info');
+
+  if (!name || !desc || !category || Number.isNaN(price) || Number.isNaN(rating)) {
+    const issue = [
+      !name ? 'Meal name is empty.' : '',
+      !desc ? 'Description is empty.' : '',
+      !category ? 'Category is missing.' : '',
+      Number.isNaN(price) ? 'Price is invalid.' : '',
+      Number.isNaN(rating) ? 'Rating is invalid.' : ''
+    ].filter(Boolean).join(' ');
+    console.error('[DEBUG] invalid meal data before submit', { name, price, desc, category, rating });
+    setMealDebug(`Validation failed: ${issue}`, 'error');
+    showToast('Please fill in all meal fields correctly.');
+    return;
+  }
 
   let imageUrl = document.getElementById('mImageUrl')?.value?.trim() || DEFAULT_IMG;
-  const fileInput = document.getElementById('mImageFile');
 
   if (fileInput && fileInput.files && fileInput.files[0]) {
     try {
       imageUrl = await fileToBase64(fileInput.files[0]);
+      console.log('[DEBUG] meal image converted to base64 successfully');
+      setMealDebug('Image file loaded successfully.', 'info');
     } catch (err) {
+      console.error('[DEBUG] meal image conversion failed', err);
+      setMealDebug(`Image read failed: ${err?.message || err}`, 'error');
       showToast('Image read failed: ' + err.message);
       return;
     }
   }
 
   const meal = {
-    name: document.getElementById('mName').value.trim(),
-    price: parseInt(document.getElementById('mPrice').value),
-    desc: document.getElementById('mDesc').value.trim(),
-    category: document.getElementById('mCategory').value,
-    rating: parseFloat(document.getElementById('mRating').value),
+    name,
+    price,
+    desc,
+    category,
+    rating,
     image: imageUrl,
-    popular: document.getElementById('mPopular').checked,
-    extras: getSelectedExtras(),
-    sides: getSelectedSides()
+    popular,
+    extras,
+    sides
   };
+
+  console.log('[DEBUG] final meal payload being sent', meal);
+  setMealDebug(`Sending payload: ${name} | N${price} | ${category} | rating ${rating} | image=${imageUrl ? 'present' : 'missing'}.`, 'info');
+
   if (editingMealId) {
     updateMeal(editingMealId, meal).then(() => {
+      setMealDebug('Meal updated successfully in Firestore.', 'success');
       showToast('Meal updated successfully!');
       resetMealForm(); loadAllData();
+    }).catch((err) => {
+      const message = err?.message || String(err);
+      console.error('[DEBUG] updateMeal failed', err);
+      setMealDebug(`Meal update failed: ${message}`, 'error');
+      showToast('Meal update failed. Check debug panel.');
     });
   } else {
     addMeal(meal).then(() => {
+      setMealDebug('Meal added successfully to Firestore.', 'success');
       showToast('Meal added successfully!');
       resetMealForm(); loadAllData();
+    }).catch((err) => {
+      const message = err?.message || String(err);
+      console.error('[DEBUG] addMeal failed', err);
+      setMealDebug(`Meal add failed: ${message}`, 'error');
+      showToast('Meal add failed. Check debug panel.');
     });
   }
 }
@@ -194,33 +262,66 @@ function confirmDeleteMeal(id, name) {
   }
 }
 
+async function resetMeals() {
+  try {
+    await seedDatabase();
+    await loadAllData();
+    showToast('Default menu data restored.');
+  } catch (err) {
+    console.error('[DEBUG] resetMeals failed', err);
+    showToast('Reset failed. Check console log.');
+  }
+}
+
 async function handleAddGallery(e) {
   e.preventDefault();
+  console.log('[DEBUG] handleAddGallery start');
+
+  const name = document.getElementById('gName').value.trim();
+  const caption = document.getElementById('gCaption').value.trim();
+  const fileInput = document.getElementById('gImageFile');
+  console.log('[DEBUG] gallery form values', { name, caption, fileSelected: !!(fileInput && fileInput.files && fileInput.files[0]) });
+
+  if (!name) {
+    console.error('[DEBUG] invalid gallery data before submit', { name, caption });
+    showToast('Please add a gallery name.');
+    return;
+  }
 
   let imageUrl = document.getElementById('gImageUrl')?.value?.trim() || DEFAULT_IMG;
-  const fileInput = document.getElementById('gImageFile');
 
   if (fileInput && fileInput.files && fileInput.files[0]) {
     try {
       imageUrl = await fileToBase64(fileInput.files[0]);
+      console.log('[DEBUG] gallery image converted to base64 successfully');
     } catch (err) {
+      console.error('[DEBUG] gallery image conversion failed', err);
       showToast('Image read failed: ' + err.message);
       return;
     }
   }
 
   const item = {
-    name: document.getElementById('gName').value.trim(),
-    caption: document.getElementById('gCaption').value.trim(),
+    name,
+    caption,
     image: imageUrl
   };
+
+  console.log('[DEBUG] final gallery payload being sent', item);
+
   if (editingGalleryId) {
     updateGalleryItem(editingGalleryId, item).then(() => {
       showToast('Gallery item updated!'); resetGalleryForm(); loadAllData();
+    }).catch((err) => {
+      console.error('[DEBUG] updateGalleryItem failed', err);
+      showToast('Gallery update failed. Check console log.');
     });
   } else {
     addGalleryItem(item).then(() => {
       showToast('Gallery item added!'); resetGalleryForm(); loadAllData();
+    }).catch((err) => {
+      console.error('[DEBUG] addGalleryItem failed', err);
+      showToast('Gallery add failed. Check console log.');
     });
   }
 }
@@ -375,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('galleryForm').addEventListener('submit', handleAddGallery);
   document.getElementById('extraForm').addEventListener('submit', handleAddExtra);
   document.getElementById('sideForm').addEventListener('submit', handleAddSide);
+  document.getElementById('resetMealsBtn')?.addEventListener('click', resetMeals);
   window.editMeal = editMeal;
   window.confirmDeleteMeal = confirmDeleteMeal;
   window.editGalleryItem = editGalleryItem;
@@ -385,4 +487,5 @@ document.addEventListener('DOMContentLoaded', () => {
   window.seedDatabase = seedDatabase;
   window.resetMealForm = resetMealForm;
   window.resetGalleryForm = resetGalleryForm;
+  window.resetMeals = resetMeals;
 });
