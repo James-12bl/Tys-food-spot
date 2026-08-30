@@ -143,14 +143,23 @@
   border: 1px solid #f0d9a3;
   background: #fffaf0;
   color: #5d4b1d;
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: block;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.6;
+  box-shadow: 0 6px 16px rgba(56, 37, 0, 0.08);
 }
 .meal-debug-panel.visible {
   display: block;
+}
+.meal-debug-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a5100;
+  margin-bottom: 8px;
 }
 .meal-debug-line {
   margin: 4px 0;
@@ -158,11 +167,11 @@
 }
 .meal-debug-line.error {
   color: #b42318;
-  font-weight: 600;
+  font-weight: 700;
 }
 .meal-debug-line.success {
   color: #136c43;
-  font-weight: 600;
+  font-weight: 700;
 }
 .meal-debug-line.info {
   color: #3f4a5c;

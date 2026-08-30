@@ -35,8 +35,8 @@ function setMealDebug(message, type = 'info') {
 function clearMealDebug() {
   const panel = document.getElementById('mealDebugPanel');
   if (!panel) return;
-  panel.innerHTML = '';
-  panel.classList.remove('visible');
+  panel.innerHTML = '<div class="meal-debug-title">Meal add debug</div><div class="meal-debug-line info">Waiting for meal submit...</div>';
+  panel.classList.add('visible');
 }
 
 function updateStats() {
