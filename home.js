@@ -1,16 +1,19 @@
+import { getMeals, getMealsCached, addToCart } from './main.js';
+
 function toggleSideMenu() {
   document.getElementById('sideMenu').classList.toggle('open');
 }
 
-function renderPopularMeals() {
-  const meals = getMeals().filter(m => m.popular);
+async function renderPopularMeals() {
+  const meals = getMealsCached().length > 0 ? getMealsCached() : await getMeals();
+  const popular = meals.filter(m => m.popular);
   const container = document.getElementById('popularMeals');
-  container.innerHTML = meals.map(meal => `
+  container.innerHTML = popular.map(meal => `
     <div class="meal-card">
       <div class="meal-img-wrap">
         <img src="${meal.image}" alt="${meal.name}" loading="lazy">
         <span class="meal-badge"><i class="fas fa-star"></i> Popular</span>
-        <button class="add-btn" onclick="addToCart(${meal.id})"><i class="fas fa-plus"></i></button>
+        <button class="add-btn" onclick="addToCart('${meal.id}')"><i class="fas fa-plus"></i></button>
       </div>
       <div class="meal-info">
         <h3 class="meal-name">${meal.name}</h3>
@@ -26,18 +29,15 @@ function renderPopularMeals() {
 
 function searchMeals() {
   const query = document.getElementById('searchInput').value.toLowerCase();
-  const meals = getMeals().filter(m => m.popular && m.name.toLowerCase().includes(query));
+  const meals = getMealsCached().filter(m => m.popular && m.name.toLowerCase().includes(query));
   const container = document.getElementById('popularMeals');
-  if (query === '') {
-    renderPopularMeals();
-    return;
-  }
+  if (query === '') { renderPopularMeals(); return; }
   container.innerHTML = meals.map(meal => `
     <div class="meal-card">
       <div class="meal-img-wrap">
         <img src="${meal.image}" alt="${meal.name}" loading="lazy">
         <span class="meal-badge"><i class="fas fa-star"></i> Popular</span>
-        <button class="add-btn" onclick="addToCart(${meal.id})"><i class="fas fa-plus"></i></button>
+        <button class="add-btn" onclick="addToCart('${meal.id}')"><i class="fas fa-plus"></i></button>
       </div>
       <div class="meal-info">
         <h3 class="meal-name">${meal.name}</h3>
@@ -51,4 +51,8 @@ function searchMeals() {
   `).join('');
 }
 
-document.addEventListener('DOMContentLoaded', renderPopularMeals);
+document.addEventListener('DOMContentLoaded', async () => {
+  await getMeals();
+  renderPopularMeals();
+  window.toggleSideMenu = toggleSideMenu;
+});

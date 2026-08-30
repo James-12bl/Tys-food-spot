@@ -1,11 +1,18 @@
-function renderGallery() {
-  const meals = getMeals();
+import { getGallery, getGalleryCached } from './main.js';
+
+async function renderGallery() {
+  const items = getGalleryCached().length > 0 ? getGalleryCached() : await getGallery();
   const container = document.getElementById('galleryGrid');
-  container.innerHTML = meals.map(meal => `
-    <div class="gallery-item" onclick="openLightbox('${meal.image}', '${meal.name}')">
-      <img src="${meal.image}" alt="${meal.name}" loading="lazy">
+  if (items.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">No gallery items yet.</p>';
+    return;
+  }
+  container.innerHTML = items.map(item => `
+    <div class="gallery-item" onclick="openLightbox('${item.image}', '${item.name}')">
+      <img src="${item.image}" alt="${item.name}" loading="lazy">
       <div class="gallery-overlay">
-        <span class="gallery-name">${meal.name}</span>
+        <span class="gallery-name">${item.name}</span>
+        ${item.caption ? `<span style="font-size:11px;opacity:0.9;">${item.caption}</span>` : ''}
       </div>
     </div>
   `).join('');
@@ -23,4 +30,8 @@ function closeLightbox() {
   document.body.style.overflow = '';
 }
 
-document.addEventListener('DOMContentLoaded', renderGallery);
+document.addEventListener('DOMContentLoaded', async () => {
+  await renderGallery();
+  window.openLightbox = openLightbox;
+  window.closeLightbox = closeLightbox;
+});
