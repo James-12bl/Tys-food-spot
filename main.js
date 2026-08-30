@@ -138,9 +138,6 @@ export async function uploadImage(file, path) {
 }
 
 /* ========== CART ========== */
-function getCart() {
-  return JSON.parse(localStorage.getItem('tys_cart')) || [];
-}
 function saveCart(cart) {
   localStorage.setItem('tys_cart', JSON.stringify(cart));
 }
