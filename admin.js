@@ -7,11 +7,42 @@ import {
 } from './main.js';
 
 /* ========== BASE64 HELPER ========== */
-function fileToBase64(file) {
+function fileToBase64(file, maxBytes = 1500000) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1200;
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        let quality = 0.82;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+        while (dataUrl.length > maxBytes && quality > 0.25) {
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+
+        if (dataUrl.length > maxBytes) {
+          reject(new Error(`Image is still too large after compression (${Math.round(dataUrl.length / 1024)}KB). Use a smaller file.`));
+          return;
+        }
+
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error('Unable to read image file.'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('Unable to read selected file.'));
     reader.readAsDataURL(file);
   });
 }
@@ -104,11 +135,11 @@ async function handleAddMeal(e) {
     try {
       imageUrl = await fileToBase64(fileInput.files[0]);
       console.log('[DEBUG] meal image converted to base64 successfully');
-      setMealDebug('Image file loaded successfully.', 'info');
+      setMealDebug('Image file loaded successfully and compressed for Firestore size limits.', 'info');
     } catch (err) {
       console.error('[DEBUG] meal image conversion failed', err);
       setMealDebug(`Image read failed: ${err?.message || err}`, 'error');
-      showToast('Image read failed: ' + err.message);
+      showToast('Image read failed: ' + (err?.message || err));
       return;
     }
   }
