@@ -6,15 +6,30 @@ import {
   uploadImage, seedDatabase, showToast, getCart
 } from './main.js';
 
+/* ========== BASE64 HELPER ========== */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 const DEFAULT_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
 let allMeals = [], allGallery = [], allExtras = [], allSides = [];
 let editingMealId = null, editingGalleryId = null;
 
 function updateStats() {
-  document.getElementById('statMeals').textContent = allMeals.length;
-  document.getElementById('statPopular').textContent = allMeals.filter(m => m.popular).length;
-  document.getElementById('statGallery').textContent = allGallery.length;
-  document.getElementById('statCart').textContent = getCart().reduce((s, i) => s + i.qty, 0);
+  const mealsStat = document.getElementById('statMeals');
+  const popularStat = document.getElementById('statPopular');
+  const galleryStat = document.getElementById('statGallery');
+  const cartStat = document.getElementById('statCart');
+
+  if (mealsStat) mealsStat.textContent = allMeals.length;
+  if (popularStat) popularStat.textContent = allMeals.filter(m => m.popular).length;
+  if (galleryStat) galleryStat.textContent = allGallery.length;
+  if (cartStat) cartStat.textContent = getCart().reduce((s, i) => s + i.qty, 0);
 }
 
 async function loadAllData() {
@@ -31,15 +46,28 @@ async function loadAllData() {
   updateStats();
 }
 
-function handleAddMeal(e) {
+async function handleAddMeal(e) {
   e.preventDefault();
+
+  let imageUrl = document.getElementById('mImageUrl')?.value?.trim() || DEFAULT_IMG;
+  const fileInput = document.getElementById('mImageFile');
+
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    try {
+      imageUrl = await fileToBase64(fileInput.files[0]);
+    } catch (err) {
+      showToast('Image read failed: ' + err.message);
+      return;
+    }
+  }
+
   const meal = {
     name: document.getElementById('mName').value.trim(),
     price: parseInt(document.getElementById('mPrice').value),
     desc: document.getElementById('mDesc').value.trim(),
     category: document.getElementById('mCategory').value,
     rating: parseFloat(document.getElementById('mRating').value),
-    image: document.getElementById('mImage').value.trim() || DEFAULT_IMG,
+    image: imageUrl,
     popular: document.getElementById('mPopular').checked,
     extras: getSelectedExtras(),
     sides: getSelectedSides()
@@ -59,6 +87,10 @@ function handleAddMeal(e) {
 
 function resetMealForm() {
   document.querySelector('.admin-form').reset();
+  const fileInput = document.getElementById('mImageFile');
+  if (fileInput) fileInput.value = '';
+  const hiddenImage = document.getElementById('mImageUrl');
+  if (hiddenImage) hiddenImage.value = '';
   document.getElementById('mRating').value = '4.5';
   document.getElementById('mealFormTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Add New Meal';
   document.getElementById('submitMealBtn').innerHTML = '<i class="fas fa-plus"></i> Add Meal';
@@ -75,7 +107,10 @@ function editMeal(id) {
   document.getElementById('mDesc').value = meal.desc;
   document.getElementById('mCategory').value = meal.category;
   document.getElementById('mRating').value = meal.rating;
-  document.getElementById('mImage').value = meal.image === DEFAULT_IMG ? '' : meal.image;
+  const hiddenImage = document.getElementById('mImageUrl');
+  if (hiddenImage) hiddenImage.value = meal.image === DEFAULT_IMG ? '' : meal.image;
+  const fileInput = document.getElementById('mImageFile');
+  if (fileInput) fileInput.value = '';
   document.getElementById('mPopular').checked = meal.popular;
   document.getElementById('mealFormTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Meal';
   document.getElementById('submitMealBtn').innerHTML = '<i class="fas fa-save"></i> Update Meal';
@@ -159,12 +194,25 @@ function confirmDeleteMeal(id, name) {
   }
 }
 
-function handleAddGallery(e) {
+async function handleAddGallery(e) {
   e.preventDefault();
+
+  let imageUrl = document.getElementById('gImageUrl')?.value?.trim() || DEFAULT_IMG;
+  const fileInput = document.getElementById('gImageFile');
+
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    try {
+      imageUrl = await fileToBase64(fileInput.files[0]);
+    } catch (err) {
+      showToast('Image read failed: ' + err.message);
+      return;
+    }
+  }
+
   const item = {
     name: document.getElementById('gName').value.trim(),
     caption: document.getElementById('gCaption').value.trim(),
-    image: document.getElementById('gImage').value.trim() || DEFAULT_IMG
+    image: imageUrl
   };
   if (editingGalleryId) {
     updateGalleryItem(editingGalleryId, item).then(() => {
@@ -179,6 +227,10 @@ function handleAddGallery(e) {
 
 function resetGalleryForm() {
   document.getElementById('galleryForm').reset();
+  const fileInput = document.getElementById('gImageFile');
+  if (fileInput) fileInput.value = '';
+  const hiddenImage = document.getElementById('gImageUrl');
+  if (hiddenImage) hiddenImage.value = '';
   editingGalleryId = null;
   document.getElementById('galleryFormTitle').innerHTML = '<i class="fas fa-images"></i> Add Gallery Item';
   document.getElementById('submitGalleryBtn').innerHTML = '<i class="fas fa-plus"></i> Add to Gallery';
@@ -190,7 +242,10 @@ function editGalleryItem(id) {
   editingGalleryId = id;
   document.getElementById('gName').value = item.name;
   document.getElementById('gCaption').value = item.caption || '';
-  document.getElementById('gImage').value = item.image === DEFAULT_IMG ? '' : item.image;
+  const hiddenImage = document.getElementById('gImageUrl');
+  if (hiddenImage) hiddenImage.value = item.image === DEFAULT_IMG ? '' : item.image;
+  const fileInput = document.getElementById('gImageFile');
+  if (fileInput) fileInput.value = '';
   document.getElementById('galleryFormTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Gallery Item';
   document.getElementById('submitGalleryBtn').innerHTML = '<i class="fas fa-save"></i> Update Gallery Item';
   window.scrollTo({ top: document.getElementById('gallerySection').offsetTop - 20, behavior: 'smooth' });
