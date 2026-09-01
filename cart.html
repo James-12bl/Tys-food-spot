@@ -38,6 +38,44 @@
     <a href="menu.html" class="browse-btn">Browse Menu</a>
   </div>
 
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="payment-modal">
+    <div class="payment-modal-content">
+      <button class="modal-close" onclick="closePaymentModal()"><i class="fas fa-times"></i></button>
+      
+      <!-- Step 1: Payment Details -->
+      <div id="paymentStep1">
+        <div class="modal-icon primary"><i class="fas fa-credit-card"></i></div>
+        <h3 class="modal-title">Make Payment</h3>
+        <p class="modal-subtitle">Please transfer the total amount to the account below before completing your order.</p>
+        
+        <div class="account-card">
+          <div class="account-row"><span>Bank</span><strong>Moniepoint</strong></div>
+          <div class="account-row"><span>Account Number</span><strong onclick="copyAccountNumber()" class="copyable">5288079233 <i class="fas fa-copy"></i></strong></div>
+          <div class="account-row"><span>Account Name</span><strong>Ighere Tracy</strong></div>
+        </div>
+        
+        <div class="modal-total" id="modalTotal"></div>
+        
+        <button class="btn-pay" onclick="showPaymentSent()"><i class="fas fa-check-circle"></i> I've Sent the Money</button>
+      </div>
+      
+      <!-- Step 2: Screenshot & WhatsApp -->
+      <div id="paymentStep2" style="display:none;">
+        <div class="modal-icon success"><i class="fas fa-check"></i></div>
+        <h3 class="modal-title">Payment Noted!</h3>
+        <p class="modal-confirm">I made payment to this account number <strong>5288079233</strong> Moniepoint <strong>Ighere Tracy</strong></p>
+        
+        <div class="screenshot-alert">
+          <i class="fas fa-camera"></i>
+          <p><strong>Important:</strong> Please drop a screenshot of your transaction as proof of payment in the WhatsApp chat.</p>
+        </div>
+        
+        <button class="btn-whatsapp" onclick="completeOrderOnWhatsApp()"><i class="fab fa-whatsapp"></i> Complete Order on WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item"><i class="fas fa-home"></i>Home</a>
     <a href="menu.html" class="nav-item"><i class="fas fa-utensils"></i>Menu</a>

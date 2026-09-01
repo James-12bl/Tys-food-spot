@@ -65,11 +65,73 @@ function removeItem(cartKey) {
   renderCart();
 }
 
+/* ========== NEW CHECKOUT FLOW ========== */
+
 function checkout() {
-  if (getCart().length === 0) return;
-  showToast('Order placed successfully! Thank you.');
+  const cart = getCart();
+  if (cart.length === 0) return;
+  const total = getCartTotal() + 500;
+  document.getElementById('modalTotal').textContent = 'N' + total.toLocaleString();
+  document.getElementById('paymentModal').classList.add('active');
+  document.getElementById('paymentStep1').style.display = 'block';
+  document.getElementById('paymentStep2').style.display = 'none';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function showPaymentSent() {
+  document.getElementById('paymentStep1').style.display = 'none';
+  document.getElementById('paymentStep2').style.display = 'block';
+}
+
+function copyAccountNumber() {
+  const acc = '5288079233';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(acc).then(() => showToast('Account number copied!'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = acc;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Account number copied!');
+  }
+}
+
+function completeOrderOnWhatsApp() {
+  const cart = getCart();
+  const subtotal = getCartTotal();
+  const delivery = 500;
+  const total = subtotal + delivery;
+  
+  let msg = `🍽️ *New Order from Ty's Food Spot*\n\n*Order Items:*\n`;
+  cart.forEach((item, i) => {
+    const extraTotal = (item.extras || []).reduce((s, e) => s + e.price, 0);
+    const sideTotal = (item.sides || []).reduce((s, s2) => s + s2.price, 0);
+    const unitPrice = item.price + extraTotal + sideTotal;
+    const lineTotal = unitPrice * item.qty;
+    msg += `${i + 1}. ${item.name} x${item.qty} - N${lineTotal.toLocaleString()}\n`;
+    if ((item.extras || []).length > 0) msg += `   └ Extras: ${item.extras.map(e => `${e.name} (+N${e.price.toLocaleString()})`).join(', ')}\n`;
+    if ((item.sides || []).length > 0) msg += `   └ Sides: ${item.sides.map(s => `${s.name} (+N${s.price.toLocaleString()})`).join(', ')}\n`;
+  });
+  
+  msg += `\n*Subtotal:* N${subtotal.toLocaleString()}\n`;
+  msg += `*Delivery Fee:* N${delivery.toLocaleString()}\n`;
+  msg += `*Total:* N${total.toLocaleString()}\n\n`;
+  msg += `✅ *Payment Status:* I have made payment to Moniepoint Account 5288079233 (Ighere Tracy).\n`;
+  msg += `📎 *Please find attached screenshot of transaction as proof of payment.*\n\n`;
+  msg += `Thank you!`;
+  
+  const url = `https://wa.me/2348153218274?text=${encodeURIComponent(msg)}`;
   clearCart();
   renderCart();
+  closePaymentModal();
+  window.open(url, '_blank');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -77,4 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.changeQty = changeQty;
   window.removeItem = removeItem;
   window.checkout = checkout;
+  window.closePaymentModal = closePaymentModal;
+  window.showPaymentSent = showPaymentSent;
+  window.copyAccountNumber = copyAccountNumber;
+  window.completeOrderOnWhatsApp = completeOrderOnWhatsApp;
 });

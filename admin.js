@@ -3,10 +3,17 @@ import {
   getGallery, addGalleryItem, deleteGalleryItem, updateGalleryItem,
   getExtras, addExtra, deleteExtra,
   getSides, addSide, deleteSide,
-  uploadImage, seedDatabase, showToast, getCart
+  seedDatabase, showToast, getCart
 } from './main.js';
 
-/* ========== BASE64 HELPER ========== */
+const DEFAULT_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
+let allMeals = [];
+let allGallery = [];
+let allExtras = [];
+let allSides = [];
+let editingMealId = null;
+let editingGalleryId = null;
+
 function fileToBase64(file, maxBytes = 1500000) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -14,12 +21,17 @@ function fileToBase64(file, maxBytes = 1500000) {
       const img = new Image();
       img.onload = () => {
         const maxWidth = 1200;
-        const scale = Math.min(1, maxWidth / img.width);
+        const scale = Math.min(1, maxWidth / img.width || 1);
         const canvas = document.createElement('canvas');
         canvas.width = Math.max(1, Math.round(img.width * scale));
         canvas.height = Math.max(1, Math.round(img.height * scale));
 
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas is not supported in this browser.'));
+          return;
+        }
+
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -47,10 +59,6 @@ function fileToBase64(file, maxBytes = 1500000) {
   });
 }
 
-const DEFAULT_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
-let allMeals = [], allGallery = [], allExtras = [], allSides = [];
-let editingMealId = null, editingGalleryId = null;
-
 function setMealDebug(message, type = 'info') {
   const panel = document.getElementById('mealDebugPanel');
   if (!panel) return;
@@ -76,10 +84,10 @@ function updateStats() {
   const galleryStat = document.getElementById('statGallery');
   const cartStat = document.getElementById('statCart');
 
-  if (mealsStat) mealsStat.textContent = allMeals.length;
-  if (popularStat) popularStat.textContent = allMeals.filter(m => m.popular).length;
-  if (galleryStat) galleryStat.textContent = allGallery.length;
-  if (cartStat) cartStat.textContent = getCart().reduce((s, i) => s + i.qty, 0);
+  if (mealsStat) mealsStat.textContent = String(allMeals.length);
+  if (popularStat) popularStat.textContent = String(allMeals.filter(m => m.popular).length);
+  if (galleryStat) galleryStat.textContent = String(allGallery.length);
+  if (cartStat) cartStat.textContent = String(getCart().reduce((sum, item) => sum + item.qty, 0));
 }
 
 async function loadAllData() {
@@ -94,6 +102,46 @@ async function loadAllData() {
   populateExtrasSelect();
   populateSidesSelect();
   updateStats();
+}
+
+function getSelectedExtras() {
+  const selected = [];
+  document.querySelectorAll('.extra-check input:checked').forEach(cb => {
+    const extra = allExtras.find(e => e.name === cb.dataset.name);
+    if (extra) selected.push({ name: extra.name, price: extra.price });
+  });
+  return selected;
+}
+
+function getSelectedSides() {
+  const selected = [];
+  document.querySelectorAll('.side-check input:checked').forEach(cb => {
+    const side = allSides.find(s => s.name === cb.dataset.name);
+    if (side) selected.push({ name: side.name, price: side.price });
+  });
+  return selected;
+}
+
+function populateExtrasSelect() {
+  const container = document.getElementById('extrasSelect');
+  if (!container) return;
+  container.innerHTML = allExtras.map(extra => `
+    <label class="extra-check">
+      <input type="checkbox" data-name="${extra.name}">
+      <span>${extra.name} (+N${extra.price.toLocaleString()})</span>
+    </label>
+  `).join('');
+}
+
+function populateSidesSelect() {
+  const container = document.getElementById('sidesSelect');
+  if (!container) return;
+  container.innerHTML = allSides.map(side => `
+    <label class="side-check">
+      <input type="checkbox" data-name="${side.name}">
+      <span>${side.name} (+N${side.price.toLocaleString()})</span>
+    </label>
+  `).join('');
 }
 
 async function handleAddMeal(e) {
@@ -112,7 +160,17 @@ async function handleAddMeal(e) {
   const sides = getSelectedSides();
   const fileInput = document.getElementById('mImageFile');
 
-  console.log('[DEBUG] meal form values', { name, price, desc, category, rating, popular, extras, sides, fileSelected: !!(fileInput && fileInput.files && fileInput.files[0]) });
+  console.log('[DEBUG] meal form values', {
+    name,
+    price,
+    desc,
+    category,
+    rating,
+    popular,
+    extras,
+    sides,
+    fileSelected: !!(fileInput && fileInput.files && fileInput.files[0])
+  });
   setMealDebug(`Values: name="${name || '(empty)'}", price=${price}, category="${category || '(empty)'}", rating=${rating}, extras=${extras.length}, sides=${sides.length}.`, 'info');
 
   if (!name || !desc || !category || Number.isNaN(price) || Number.isNaN(rating)) {
@@ -159,40 +217,39 @@ async function handleAddMeal(e) {
   console.log('[DEBUG] final meal payload being sent', meal);
   setMealDebug(`Sending payload: ${name} | N${price} | ${category} | rating ${rating} | image=${imageUrl ? 'present' : 'missing'}.`, 'info');
 
-  if (editingMealId) {
-    updateMeal(editingMealId, meal).then(() => {
+  try {
+    if (editingMealId) {
+      await updateMeal(editingMealId, meal);
       setMealDebug('Meal updated successfully in Firestore.', 'success');
       showToast('Meal updated successfully!');
-      resetMealForm(); loadAllData();
-    }).catch((err) => {
-      const message = err?.message || String(err);
-      console.error('[DEBUG] updateMeal failed', err);
-      setMealDebug(`Meal update failed: ${message}`, 'error');
-      showToast('Meal update failed. Check debug panel.');
-    });
-  } else {
-    addMeal(meal).then(() => {
+    } else {
+      await addMeal(meal);
       setMealDebug('Meal added successfully to Firestore.', 'success');
       showToast('Meal added successfully!');
-      resetMealForm(); loadAllData();
-    }).catch((err) => {
-      const message = err?.message || String(err);
-      console.error('[DEBUG] addMeal failed', err);
-      setMealDebug(`Meal add failed: ${message}`, 'error');
-      showToast('Meal add failed. Check debug panel.');
-    });
+    }
+    resetMealForm();
+    await loadAllData();
+  } catch (err) {
+    const message = err?.message || String(err);
+    console.error('[DEBUG] meal save failed', err);
+    setMealDebug(`Meal ${editingMealId ? 'update' : 'add'} failed: ${message}`, 'error');
+    showToast(`Meal ${editingMealId ? 'update' : 'add'} failed. Check debug panel.`);
   }
 }
 
 function resetMealForm() {
-  document.querySelector('.admin-form').reset();
+  const form = document.querySelector('.admin-form');
+  if (form) form.reset();
   const fileInput = document.getElementById('mImageFile');
   if (fileInput) fileInput.value = '';
   const hiddenImage = document.getElementById('mImageUrl');
   if (hiddenImage) hiddenImage.value = '';
-  document.getElementById('mRating').value = '4.5';
-  document.getElementById('mealFormTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Add New Meal';
-  document.getElementById('submitMealBtn').innerHTML = '<i class="fas fa-plus"></i> Add Meal';
+  const rating = document.getElementById('mRating');
+  if (rating) rating.value = '4.5';
+  const title = document.getElementById('mealFormTitle');
+  if (title) title.innerHTML = '<i class="fas fa-plus-circle"></i> Add New Meal';
+  const btn = document.getElementById('submitMealBtn');
+  if (btn) btn.innerHTML = '<i class="fas fa-plus"></i> Add Meal';
   editingMealId = null;
   document.querySelectorAll('.extra-check input, .side-check input').forEach(cb => cb.checked = false);
 }
@@ -210,9 +267,11 @@ function editMeal(id) {
   if (hiddenImage) hiddenImage.value = meal.image === DEFAULT_IMG ? '' : meal.image;
   const fileInput = document.getElementById('mImageFile');
   if (fileInput) fileInput.value = '';
-  document.getElementById('mPopular').checked = meal.popular;
-  document.getElementById('mealFormTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Meal';
-  document.getElementById('submitMealBtn').innerHTML = '<i class="fas fa-save"></i> Update Meal';
+  document.getElementById('mPopular').checked = !!meal.popular;
+  const title = document.getElementById('mealFormTitle');
+  if (title) title.innerHTML = '<i class="fas fa-edit"></i> Edit Meal';
+  const btn = document.getElementById('submitMealBtn');
+  if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Update Meal';
   document.querySelectorAll('.extra-check input').forEach(cb => {
     cb.checked = (meal.extras || []).some(e => e.name === cb.dataset.name);
   });
@@ -222,52 +281,14 @@ function editMeal(id) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function getSelectedExtras() {
-  const selected = [];
-  document.querySelectorAll('.extra-check input:checked').forEach(cb => {
-    const extra = allExtras.find(e => e.name === cb.dataset.name);
-    if (extra) selected.push({ name: extra.name, price: extra.price });
-  });
-  return selected;
-}
-
-function getSelectedSides() {
-  const selected = [];
-  document.querySelectorAll('.side-check input:checked').forEach(cb => {
-    const side = allSides.find(s => s.name === cb.dataset.name);
-    if (side) selected.push({ name: side.name, price: side.price });
-  });
-  return selected;
-}
-
-function populateExtrasSelect() {
-  const container = document.getElementById('extrasSelect');
-  if (!container) return;
-  container.innerHTML = allExtras.map(e => `
-    <label class="extra-check">
-      <input type="checkbox" data-name="${e.name}">
-      <span>${e.name} (+N${e.price.toLocaleString()})</span>
-    </label>
-  `).join('');
-}
-
-function populateSidesSelect() {
-  const container = document.getElementById('sidesSelect');
-  if (!container) return;
-  container.innerHTML = allSides.map(s => `
-    <label class="side-check">
-      <input type="checkbox" data-name="${s.name}">
-      <span>${s.name} (+N${s.price.toLocaleString()})</span>
-    </label>
-  `).join('');
-}
-
 function renderAdminMeals() {
   const container = document.getElementById('adminMealsList');
+  if (!container) return;
   if (allMeals.length === 0) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">No meals yet.</p>';
     return;
   }
+
   container.innerHTML = allMeals.map(meal => `
     <div class="admin-meal-item">
       <img src="${meal.image}" alt="${meal.name}">
@@ -281,7 +302,8 @@ function renderAdminMeals() {
       </div>
       <div class="admin-meal-actions">
         <button class="btn-edit" onclick="editMeal('${meal.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-        <button class="btn-delete" onclick="confirmDeleteMeal('${meal.id}', '${meal.name.replace(/'/g, "\\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
+        <button class="btn-move" onclick="moveMealToGallery('${meal.id}')" title="Move to Gallery"><i class="fas fa-images"></i></button>
+        <button class="btn-delete" onclick="confirmDeleteMeal('${meal.id}', '${meal.name.replace(/'/g, "\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
       </div>
     </div>
   `).join('');
@@ -327,45 +349,42 @@ async function handleAddGallery(e) {
       console.log('[DEBUG] gallery image converted to base64 successfully');
     } catch (err) {
       console.error('[DEBUG] gallery image conversion failed', err);
-      showToast('Image read failed: ' + err.message);
+      showToast('Image read failed: ' + (err?.message || err));
       return;
     }
   }
 
-  const item = {
-    name,
-    caption,
-    image: imageUrl
-  };
-
+  const item = { name, caption, image: imageUrl };
   console.log('[DEBUG] final gallery payload being sent', item);
 
-  if (editingGalleryId) {
-    updateGalleryItem(editingGalleryId, item).then(() => {
-      showToast('Gallery item updated!'); resetGalleryForm(); loadAllData();
-    }).catch((err) => {
-      console.error('[DEBUG] updateGalleryItem failed', err);
-      showToast('Gallery update failed. Check console log.');
-    });
-  } else {
-    addGalleryItem(item).then(() => {
-      showToast('Gallery item added!'); resetGalleryForm(); loadAllData();
-    }).catch((err) => {
-      console.error('[DEBUG] addGalleryItem failed', err);
-      showToast('Gallery add failed. Check console log.');
-    });
+  try {
+    if (editingGalleryId) {
+      await updateGalleryItem(editingGalleryId, item);
+      showToast('Gallery item updated!');
+    } else {
+      await addGalleryItem(item);
+      showToast('Gallery item added!');
+    }
+    resetGalleryForm();
+    await loadAllData();
+  } catch (err) {
+    console.error('[DEBUG] gallery save failed', err);
+    showToast('Gallery save failed. Check console log.');
   }
 }
 
 function resetGalleryForm() {
-  document.getElementById('galleryForm').reset();
+  const form = document.getElementById('galleryForm');
+  if (form) form.reset();
   const fileInput = document.getElementById('gImageFile');
   if (fileInput) fileInput.value = '';
   const hiddenImage = document.getElementById('gImageUrl');
   if (hiddenImage) hiddenImage.value = '';
   editingGalleryId = null;
-  document.getElementById('galleryFormTitle').innerHTML = '<i class="fas fa-images"></i> Add Gallery Item';
-  document.getElementById('submitGalleryBtn').innerHTML = '<i class="fas fa-plus"></i> Add to Gallery';
+  const title = document.getElementById('galleryFormTitle');
+  if (title) title.innerHTML = '<i class="fas fa-images"></i> Add Gallery Item';
+  const btn = document.getElementById('submitGalleryBtn');
+  if (btn) btn.innerHTML = '<i class="fas fa-plus"></i> Add to Gallery';
 }
 
 function editGalleryItem(id) {
@@ -378,33 +397,67 @@ function editGalleryItem(id) {
   if (hiddenImage) hiddenImage.value = item.image === DEFAULT_IMG ? '' : item.image;
   const fileInput = document.getElementById('gImageFile');
   if (fileInput) fileInput.value = '';
-  document.getElementById('galleryFormTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Gallery Item';
-  document.getElementById('submitGalleryBtn').innerHTML = '<i class="fas fa-save"></i> Update Gallery Item';
+  const title = document.getElementById('galleryFormTitle');
+  if (title) title.innerHTML = '<i class="fas fa-edit"></i> Edit Gallery Item';
+  const btn = document.getElementById('submitGalleryBtn');
+  if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Update Gallery Item';
   window.scrollTo({ top: document.getElementById('gallerySection').offsetTop - 20, behavior: 'smooth' });
 }
 
 function moveGalleryToMeal(id) {
   const item = allGallery.find(g => g.id === id);
   if (!item) return;
-  if (!confirm('Move "' + item.name + '" from Gallery to Meals?')) return;
+  if (!confirm('Copy "' + item.name + '" to the Menu? It will stay in Gallery too.')) return;
+
   const meal = {
-    name: item.name, desc: item.caption || item.name, price: 0,
-    rating: 4.5, category: 'grills', image: item.image,
-    popular: false, extras: [], sides: []
+    name: item.name,
+    desc: item.caption || item.name,
+    price: 0,
+    rating: 4.5,
+    category: 'grills',
+    image: item.image,
+    popular: false,
+    extras: [],
+    sides: []
   };
+
   addMeal(meal).then(() => {
-    deleteGalleryItem(id).then(() => {
-      showToast('Moved to Meals! Now edit the price & details.'); loadAllData();
-    });
+    showToast('Copied to Menu! Edit the price and details before saving.');
+    loadAllData();
+  }).catch((err) => {
+    console.error('[DEBUG] moveGalleryToMeal failed', err);
+    showToast('Copy to Menu failed. Check console log.');
+  });
+}
+
+function moveMealToGallery(id) {
+  const meal = allMeals.find(m => m.id === id);
+  if (!meal) return;
+  if (!confirm('Copy "' + meal.name + '" to Gallery? It will stay in the Menu too.')) return;
+
+  const item = {
+    name: meal.name,
+    caption: meal.desc || meal.name,
+    image: meal.image
+  };
+
+  addGalleryItem(item).then(() => {
+    showToast('Copied to Gallery! You can still edit the meal in the Menu.');
+    loadAllData();
+  }).catch((err) => {
+    console.error('[DEBUG] moveMealToGallery failed', err);
+    showToast('Copy to Gallery failed. Check console log.');
   });
 }
 
 function renderGalleryAdmin() {
   const container = document.getElementById('adminGalleryList');
+  if (!container) return;
   if (allGallery.length === 0) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">No gallery items yet.</p>';
     return;
   }
+
   container.innerHTML = allGallery.map(item => `
     <div class="admin-meal-item">
       <img src="${item.image}" alt="${item.name}">
@@ -414,8 +467,8 @@ function renderGalleryAdmin() {
       </div>
       <div class="admin-meal-actions">
         <button class="btn-edit" onclick="editGalleryItem('${item.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-        <button class="btn-move" onclick="moveGalleryToMeal('${item.id}')" title="Move to Meals"><i class="fas fa-utensils"></i></button>
-        <button class="btn-delete" onclick="confirmDeleteGallery('${item.id}', '${item.name.replace(/'/g, "\\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
+        <button class="btn-move" onclick="moveGalleryToMeal('${item.id}')" title="Move to Menu"><i class="fas fa-utensils"></i></button>
+        <button class="btn-delete" onclick="confirmDeleteGallery('${item.id}', '${item.name.replace(/'/g, "\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
       </div>
     </div>
   `).join('');
@@ -435,15 +488,17 @@ function handleAddExtra(e) {
 
 function renderExtrasAdmin() {
   const container = document.getElementById('adminExtrasList');
+  if (!container) return;
   if (allExtras.length === 0) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">No extras yet.</p>';
     return;
   }
+
   container.innerHTML = allExtras.map(extra => `
     <div class="admin-meal-item">
       <div class="admin-meal-info" style="flex:1"><h4>${extra.name}</h4><p>+N${extra.price.toLocaleString()}</p></div>
       <div class="admin-meal-actions">
-        <button class="btn-delete" onclick="confirmDeleteExtra('${extra.id}', '${extra.name.replace(/'/g, "\\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
+        <button class="btn-delete" onclick="confirmDeleteExtra('${extra.id}', '${extra.name.replace(/'/g, "\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
       </div>
     </div>
   `).join('');
@@ -463,15 +518,17 @@ function handleAddSide(e) {
 
 function renderSidesAdmin() {
   const container = document.getElementById('adminSidesList');
+  if (!container) return;
   if (allSides.length === 0) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">No sides yet.</p>';
     return;
   }
+
   container.innerHTML = allSides.map(side => `
     <div class="admin-meal-item">
       <div class="admin-meal-info" style="flex:1"><h4>${side.name}</h4><p>+N${side.price.toLocaleString()}</p></div>
       <div class="admin-meal-actions">
-        <button class="btn-delete" onclick="confirmDeleteSide('${side.id}', '${side.name.replace(/'/g, "\\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
+        <button class="btn-delete" onclick="confirmDeleteSide('${side.id}', '${side.name.replace(/'/g, "\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
       </div>
     </div>
   `).join('');
@@ -484,8 +541,9 @@ function confirmDeleteSide(id, name) {
 }
 
 function renderInquiries() {
-  const inquiries = JSON.parse(localStorage.getItem('tys_inquiries')) || [];
+  const inquiries = JSON.parse(localStorage.getItem('tys_inquiries') || '[]');
   const container = document.getElementById('inquiriesList');
+  if (!container) return;
   if (inquiries.length === 0) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">No inquiries yet.</p>';
     return;
@@ -503,15 +561,27 @@ function renderInquiries() {
 document.addEventListener('DOMContentLoaded', () => {
   loadAllData();
   renderInquiries();
-  document.querySelector('.admin-form').addEventListener('submit', handleAddMeal);
-  document.getElementById('galleryForm').addEventListener('submit', handleAddGallery);
-  document.getElementById('extraForm').addEventListener('submit', handleAddExtra);
-  document.getElementById('sideForm').addEventListener('submit', handleAddSide);
-  document.getElementById('resetMealsBtn')?.addEventListener('click', resetMeals);
+
+  const mealForm = document.querySelector('.admin-form');
+  if (mealForm) mealForm.addEventListener('submit', handleAddMeal);
+
+  const galleryForm = document.getElementById('galleryForm');
+  if (galleryForm) galleryForm.addEventListener('submit', handleAddGallery);
+
+  const extraForm = document.getElementById('extraForm');
+  if (extraForm) extraForm.addEventListener('submit', handleAddExtra);
+
+  const sideForm = document.getElementById('sideForm');
+  if (sideForm) sideForm.addEventListener('submit', handleAddSide);
+
+  const resetBtn = document.getElementById('resetMealsBtn');
+  if (resetBtn) resetBtn.addEventListener('click', resetMeals);
+
   window.editMeal = editMeal;
   window.confirmDeleteMeal = confirmDeleteMeal;
   window.editGalleryItem = editGalleryItem;
   window.moveGalleryToMeal = moveGalleryToMeal;
+  window.moveMealToGallery = moveMealToGallery;
   window.confirmDeleteGallery = confirmDeleteGallery;
   window.confirmDeleteExtra = confirmDeleteExtra;
   window.confirmDeleteSide = confirmDeleteSide;
