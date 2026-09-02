@@ -74,17 +74,24 @@ function initPatternLock() {
     if (!dot) return;
     event.preventDefault();
     drawing = true;
+    grid.setPointerCapture?.(event.pointerId);
     clearPattern();
     addPatternDot(Number(dot.dataset.dot));
   });
-  grid.addEventListener('pointerover', event => {
-    const dot = event.target.closest('button');
+  grid.addEventListener('pointermove', event => {
+    if (!drawing) return;
+    event.preventDefault();
+    const element = document.elementFromPoint(event.clientX, event.clientY);
+    const dot = element?.closest('#patternGrid button');
     if (dot) addPatternDot(Number(dot.dataset.dot));
   });
-  window.addEventListener('pointerup', () => {
+  grid.addEventListener('pointerup', () => {
     if (!drawing) return;
     drawing = false;
     unlockWithPattern().catch(error => setPatternStatus(error.message));
+  });
+  grid.addEventListener('pointercancel', () => {
+    drawing = false;
   });
   document.getElementById('patternReset').addEventListener('click', () => {
     clearPattern();
