@@ -1,4 +1,4 @@
-import { getGallery, getGalleryCached } from './main.js';
+import { getGallery, getGalleryCached, hidePageLoader } from './main.js';
 
 async function renderGallery() {
   const items = getGalleryCached().length > 0 ? getGalleryCached() : await getGallery();
@@ -31,7 +31,11 @@ function closeLightbox() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await renderGallery();
-  window.openLightbox = openLightbox;
-  window.closeLightbox = closeLightbox;
+  try {
+    await renderGallery();
+    window.openLightbox = openLightbox;
+    window.closeLightbox = closeLightbox;
+  } finally {
+    hidePageLoader();
+  }
 });

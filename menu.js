@@ -1,4 +1,4 @@
-import { getMeals, getMealsCached, addToCart, showToast } from './main.js';
+import { getMeals, getMealsCached, addToCart, showToast, hidePageLoader } from './main.js';
 
 let currentCategory = 'all';
 let selectedExtras = {};
@@ -136,14 +136,18 @@ function addMealToCart(mealId) {
 function filterMenu() { renderMenu(); }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await getMeals();
-  const urlParams = new URLSearchParams(window.location.search);
-  const cat = urlParams.get('cat') || 'all';
-  setCategory(cat);
-  window.setCategory = setCategory;
-  window.openMealModal = openMealModal;
-  window.closeMealModal = closeMealModal;
-  window.toggleExtra = toggleExtra;
-  window.toggleSide = toggleSide;
-  window.addMealToCart = addMealToCart;
+  try {
+    await getMeals();
+    const urlParams = new URLSearchParams(window.location.search);
+    const cat = urlParams.get('cat') || 'all';
+    setCategory(cat);
+    window.setCategory = setCategory;
+    window.openMealModal = openMealModal;
+    window.closeMealModal = closeMealModal;
+    window.toggleExtra = toggleExtra;
+    window.toggleSide = toggleSide;
+    window.addMealToCart = addMealToCart;
+  } finally {
+    hidePageLoader();
+  }
 });

@@ -1,4 +1,4 @@
-import { getCart, removeFromCart, updateQty, clearCart, getCartTotal, showToast } from './main.js';
+import { getCart, removeFromCart, updateQty, clearCart, getCartTotal, showToast, hidePageLoader } from './main.js';
 
 function renderCart() {
   const cart = getCart();
@@ -135,12 +135,16 @@ function completeOrderOnWhatsApp() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderCart();
-  window.changeQty = changeQty;
-  window.removeItem = removeItem;
-  window.checkout = checkout;
-  window.closePaymentModal = closePaymentModal;
-  window.showPaymentSent = showPaymentSent;
-  window.copyAccountNumber = copyAccountNumber;
-  window.completeOrderOnWhatsApp = completeOrderOnWhatsApp;
+  try {
+    renderCart();
+    window.changeQty = changeQty;
+    window.removeItem = removeItem;
+    window.checkout = checkout;
+    window.closePaymentModal = closePaymentModal;
+    window.showPaymentSent = showPaymentSent;
+    window.copyAccountNumber = copyAccountNumber;
+    window.completeOrderOnWhatsApp = completeOrderOnWhatsApp;
+  } finally {
+    hidePageLoader();
+  }
 });

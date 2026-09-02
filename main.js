@@ -220,6 +220,14 @@ export function showToast(message) {
   setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
+export function hidePageLoader() {
+  const loader = document.getElementById('pageLoader');
+  if (loader) {
+    loader.classList.add('is-hidden');
+    document.body.classList.remove('is-loading');
+  }
+}
+
 /* ========== INIT ========== */
 document.addEventListener('DOMContentLoaded', () => {
   updateCartBadge();

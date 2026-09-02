@@ -103,7 +103,13 @@
     <h2 class="section-title">Popular Meals</h2>
     <a href="menu.html" class="see-all">See all <i class="fas fa-chevron-right"></i></a>
   </div>
-  <div class="meals-grid" id="popularMeals"></div>
+  <div class="popular-meals-wrap">
+    <div class="section-loader" id="popularMealsLoader" role="status" aria-live="polite">
+      <div class="loader-spinner"></div>
+      <p>Loading popular meals...</p>
+    </div>
+    <div class="meals-grid" id="popularMeals"></div>
+  </div>
 
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item active"><i class="fas fa-home"></i>Home</a>

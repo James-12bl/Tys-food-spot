@@ -3,7 +3,7 @@ import {
   getGallery, addGalleryItem, deleteGalleryItem, updateGalleryItem,
   getExtras, addExtra, deleteExtra,
   getSides, addSide, deleteSide,
-  seedDatabase, showToast, getCart
+  seedDatabase, showToast, getCart, hidePageLoader
 } from './main.js';
 
 const DEFAULT_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
@@ -559,7 +559,7 @@ function renderInquiries() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadAllData();
+  loadAllData().finally(hidePageLoader);
   renderInquiries();
 
   const mealForm = document.querySelector('.admin-form');

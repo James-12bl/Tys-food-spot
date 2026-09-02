@@ -1,3 +1,5 @@
+import { showToast, hidePageLoader } from './main.js';
+
 function submitContact(e) {
   e.preventDefault();
   const name = document.getElementById('cName').value;
@@ -12,3 +14,8 @@ function submitContact(e) {
   showToast('Message sent successfully! We will get back to you soon.');
   document.querySelector('.contact-form').reset();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.submitContact = submitContact;
+  hidePageLoader();
+});

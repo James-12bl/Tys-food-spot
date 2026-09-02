@@ -52,7 +52,11 @@ function searchMeals() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await getMeals();
-  renderPopularMeals();
-  window.toggleSideMenu = toggleSideMenu;
+  try {
+    await getMeals();
+    await renderPopularMeals();
+    window.toggleSideMenu = toggleSideMenu;
+  } finally {
+    document.getElementById('popularMealsLoader')?.classList.add('is-hidden');
+  }
 });
