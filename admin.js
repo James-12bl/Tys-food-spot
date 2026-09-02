@@ -5,6 +5,7 @@ import {
   getSides, addSide, deleteSide,
   seedDatabase, showToast, getCart, hidePageLoader
 } from './main.js';
+import { db, getDoc, setDoc, doc } from './firebase-config.js';
 
 const DEFAULT_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
 let allMeals = [];
@@ -13,6 +14,83 @@ let allExtras = [];
 let allSides = [];
 let editingMealId = null;
 let editingGalleryId = null;
+const PATTERN_DOC = doc(db, 'settings', 'adminPattern');
+let pattern = [];
+let drawing = false;
+
+async function hashPattern(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function clearPattern() {
+  pattern = [];
+  document.querySelectorAll('#patternGrid button').forEach(dot => dot.classList.remove('selected'));
+}
+
+function setPatternStatus(message) {
+  document.getElementById('patternStatus').textContent = message;
+}
+
+function addPatternDot(dot) {
+  if (!drawing || pattern.includes(dot)) return;
+  pattern.push(dot);
+  document.querySelector(`#patternGrid button[data-dot="${dot}"]`).classList.add('selected');
+}
+
+async function finishAdminUnlock() {
+  document.getElementById('patternLock').classList.add('is-hidden');
+  document.body.classList.remove('pattern-locked');
+  await loadAllData();
+  hidePageLoader();
+}
+
+async function unlockWithPattern() {
+  if (pattern.length < 4) {
+    setPatternStatus('Use at least 4 dots.');
+    return;
+  }
+  const patternHash = await hashPattern(pattern.join('-'));
+  const saved = await getDoc(PATTERN_DOC);
+  if (!saved.exists()) {
+    await setDoc(PATTERN_DOC, { patternHash, createdAt: new Date().toISOString() });
+    setPatternStatus('Pattern saved. Unlocking...');
+    await finishAdminUnlock();
+    return;
+  }
+  if (saved.data().patternHash !== patternHash) {
+    clearPattern();
+    setPatternStatus('That pattern is not correct. Try again.');
+    return;
+  }
+  await finishAdminUnlock();
+}
+
+function initPatternLock() {
+  const grid = document.getElementById('patternGrid');
+  grid.addEventListener('pointerdown', event => {
+    const dot = event.target.closest('button');
+    if (!dot) return;
+    event.preventDefault();
+    drawing = true;
+    clearPattern();
+    addPatternDot(Number(dot.dataset.dot));
+  });
+  grid.addEventListener('pointerover', event => {
+    const dot = event.target.closest('button');
+    if (dot) addPatternDot(Number(dot.dataset.dot));
+  });
+  window.addEventListener('pointerup', () => {
+    if (!drawing) return;
+    drawing = false;
+    unlockWithPattern().catch(error => setPatternStatus(error.message));
+  });
+  document.getElementById('patternReset').addEventListener('click', () => {
+    clearPattern();
+    setPatternStatus('');
+  });
+}
 
 function fileToBase64(file, maxBytes = 1500000) {
   return new Promise((resolve, reject) => {
@@ -559,7 +637,8 @@ function renderInquiries() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadAllData().finally(hidePageLoader);
+  document.body.classList.add('pattern-locked');
+  initPatternLock();
   renderInquiries();
 
   const mealForm = document.querySelector('.admin-form');

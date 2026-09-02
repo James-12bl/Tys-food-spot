@@ -12,6 +12,26 @@
   <div class="page-loader" id="pageLoader" role="status" aria-live="polite">
     <div class="loader-content"><div class="loader-spinner"></div><p>Loading admin panel...</p></div>
   </div>
+  <div class="pattern-lock" id="patternLock" role="dialog" aria-modal="true" aria-labelledby="patternTitle">
+    <div class="pattern-card">
+      <div class="pattern-icon"><i class="fas fa-lock"></i></div>
+      <h1 id="patternTitle">Create admin pattern</h1>
+      <p id="patternHint">Draw a pattern using at least 4 dots.</p>
+      <div class="pattern-grid" id="patternGrid" aria-label="Pattern lock drawing area">
+        <button type="button" data-dot="0" aria-label="Pattern dot 1"></button>
+        <button type="button" data-dot="1" aria-label="Pattern dot 2"></button>
+        <button type="button" data-dot="2" aria-label="Pattern dot 3"></button>
+        <button type="button" data-dot="3" aria-label="Pattern dot 4"></button>
+        <button type="button" data-dot="4" aria-label="Pattern dot 5"></button>
+        <button type="button" data-dot="5" aria-label="Pattern dot 6"></button>
+        <button type="button" data-dot="6" aria-label="Pattern dot 7"></button>
+        <button type="button" data-dot="7" aria-label="Pattern dot 8"></button>
+        <button type="button" data-dot="8" aria-label="Pattern dot 9"></button>
+      </div>
+      <p class="pattern-status" id="patternStatus" aria-live="polite"></p>
+      <button type="button" class="pattern-reset" id="patternReset">Clear pattern</button>
+    </div>
+  </div>
   <header class="main-header">
     <button class="menu-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
     <div class="logo">
