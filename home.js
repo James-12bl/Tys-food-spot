@@ -13,7 +13,7 @@ async function renderPopularMeals() {
       <div class="meal-img-wrap">
         <img src="${meal.image}" alt="${meal.name}" loading="lazy">
         <span class="meal-badge"><i class="fas fa-star"></i> Popular</span>
-        <button class="add-btn" onclick="addToCart('${meal.id}')"><i class="fas fa-plus"></i></button>
+        <button class="add-btn" onclick="window.addToCart('${meal.id}')"><i class="fas fa-plus"></i></button>
       </div>
       <div class="meal-info">
         <h3 class="meal-name">${meal.name}</h3>
@@ -37,7 +37,7 @@ function searchMeals() {
       <div class="meal-img-wrap">
         <img src="${meal.image}" alt="${meal.name}" loading="lazy">
         <span class="meal-badge"><i class="fas fa-star"></i> Popular</span>
-        <button class="add-btn" onclick="addToCart('${meal.id}')"><i class="fas fa-plus"></i></button>
+        <button class="add-btn" onclick="window.addToCart('${meal.id}')"><i class="fas fa-plus"></i></button>
       </div>
       <div class="meal-info">
         <h3 class="meal-name">${meal.name}</h3>
@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await getMeals();
     await renderPopularMeals();
     window.toggleSideMenu = toggleSideMenu;
+    window.addToCart = addToCart;
   } finally {
     document.getElementById('popularMealsLoader')?.classList.add('is-hidden');
   }
