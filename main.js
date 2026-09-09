@@ -156,7 +156,7 @@ export function addToCart(mealId, selectedExtras = [], selectedSides = []) {
   } else {
     cart.push({
       cartKey, id: meal.id, name: meal.name, price: meal.price,
-      image: meal.image, qty: 1,
+      priceUnit: meal.priceUnit || 'item', image: meal.image, qty: 1,
       extras: selectedExtras, sides: selectedSides
     });
   }

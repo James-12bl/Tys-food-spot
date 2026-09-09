@@ -34,7 +34,7 @@ async function renderMenu() {
         <h3 class="meal-name">${meal.name}</h3>
         <p class="meal-desc">${meal.desc}</p>
         <div class="meal-footer">
-          <span class="meal-price">N${meal.price.toLocaleString()}</span>
+          <span class="meal-price">N${meal.price.toLocaleString()} <small>/ ${meal.priceUnit === 'portion' ? 'portion' : 'item'}</small></span>
           <span class="meal-rating"><i class="fas fa-star"></i> ${meal.rating}</span>
         </div>
         ${(meal.extras || []).length > 0 || (meal.sides || []).length > 0 ? `
@@ -96,7 +96,7 @@ function openMealModal(mealId) {
       <h3 style="font-size:20px;margin-bottom:4px;">${meal.name}</h3>
       <p style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">${meal.desc}</p>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-        <span style="font-size:22px;font-weight:700;color:var(--primary);">N${meal.price.toLocaleString()}</span>
+        <span style="font-size:22px;font-weight:700;color:var(--primary);">N${meal.price.toLocaleString()} <small>/ ${meal.priceUnit === 'portion' ? 'portion' : 'item'}</small></span>
         <span style="font-size:13px;color:#ffc107;"><i class="fas fa-star"></i> ${meal.rating}</span>
       </div>
       ${extrasHtml}

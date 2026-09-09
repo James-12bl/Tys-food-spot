@@ -241,6 +241,7 @@ async function handleAddMeal(e) {
   const category = document.getElementById('mCategory').value;
   const rating = Number(document.getElementById('mRating').value);
   const popular = document.getElementById('mPopular').checked;
+  const priceUnit = document.getElementById('mByPortion').checked ? 'portion' : 'item';
   const extras = getSelectedExtras();
   const sides = getSelectedSides();
   const fileInput = document.getElementById('mImageFile');
@@ -295,6 +296,7 @@ async function handleAddMeal(e) {
     rating,
     image: imageUrl,
     popular,
+    priceUnit,
     extras,
     sides
   };
@@ -331,6 +333,8 @@ function resetMealForm() {
   if (hiddenImage) hiddenImage.value = '';
   const rating = document.getElementById('mRating');
   if (rating) rating.value = '4.5';
+  const byPortion = document.getElementById('mByPortion');
+  if (byPortion) byPortion.checked = false;
   const title = document.getElementById('mealFormTitle');
   if (title) title.innerHTML = '<i class="fas fa-plus-circle"></i> Add New Meal';
   const btn = document.getElementById('submitMealBtn');
@@ -353,6 +357,7 @@ function editMeal(id) {
   const fileInput = document.getElementById('mImageFile');
   if (fileInput) fileInput.value = '';
   document.getElementById('mPopular').checked = !!meal.popular;
+  document.getElementById('mByPortion').checked = meal.priceUnit === 'portion';
   const title = document.getElementById('mealFormTitle');
   if (title) title.innerHTML = '<i class="fas fa-edit"></i> Edit Meal';
   const btn = document.getElementById('submitMealBtn');
@@ -379,7 +384,7 @@ function renderAdminMeals() {
       <img src="${meal.image}" alt="${meal.name}">
       <div class="admin-meal-info">
         <h4>${meal.name}</h4>
-        <p>N${meal.price.toLocaleString()} · <i class="fas fa-star" style="color:#ffc107;font-size:10px"></i> ${meal.rating}</p>
+        <p>N${meal.price.toLocaleString()} / ${meal.priceUnit === 'portion' ? 'portion' : 'item'} · <i class="fas fa-star" style="color:#ffc107;font-size:10px"></i> ${meal.rating}</p>
         <span class="cat-tag">${meal.category}</span>
         ${meal.popular ? '<span class="cat-tag" style="background:#fff3e0;color:#e8913a;margin-left:4px">Popular</span>' : ''}
         ${(meal.extras || []).length > 0 ? '<span class="cat-tag" style="background:#e3f2fd;color:#1565c0;margin-left:4px">+' + meal.extras.length + ' extras</span>' : ''}
@@ -502,6 +507,7 @@ function moveGalleryToMeal(id) {
     category: 'grills',
     image: item.image,
     popular: false,
+    priceUnit: 'item',
     extras: [],
     sides: []
   };

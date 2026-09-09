@@ -31,7 +31,7 @@ function renderCart() {
       <div class="cart-item-info" style="flex:1;min-width:0;">
         <div class="cart-item-name">${item.name}</div>
         ${extrasLabel}${sidesLabel}
-        <div class="cart-item-price">N${unitPrice.toLocaleString()} each</div>
+        <div class="cart-item-price">N${unitPrice.toLocaleString()} / ${item.priceUnit === 'portion' ? 'portion' : 'item'}</div>
       </div>
       <div class="cart-qty">
         <button class="qty-btn" onclick="changeQty('${item.cartKey}', -1)"><i class="fas fa-minus"></i></button>
@@ -115,7 +115,7 @@ function completeOrderOnWhatsApp() {
     const sideTotal = (item.sides || []).reduce((s, s2) => s + s2.price, 0);
     const unitPrice = item.price + extraTotal + sideTotal;
     const lineTotal = unitPrice * item.qty;
-    msg += `${i + 1}. ${item.name} x${item.qty} - N${lineTotal.toLocaleString()}\n`;
+    msg += `${i + 1}. ${item.name} x${item.qty} (${item.priceUnit === 'portion' ? 'portion' : 'item'}) - N${lineTotal.toLocaleString()}\n`;
     if ((item.extras || []).length > 0) msg += `   └ Extras: ${item.extras.map(e => `${e.name} (+N${e.price.toLocaleString()})`).join(', ')}\n`;
     if ((item.sides || []).length > 0) msg += `   └ Sides: ${item.sides.map(s => `${s.name} (+N${s.price.toLocaleString()})`).join(', ')}\n`;
   });

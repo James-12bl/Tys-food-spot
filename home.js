@@ -19,7 +19,7 @@ async function renderPopularMeals() {
         <h3 class="meal-name">${meal.name}</h3>
         <p class="meal-desc">${meal.desc}</p>
         <div class="meal-footer">
-          <span class="meal-price">N${meal.price.toLocaleString()}</span>
+          <span class="meal-price">N${meal.price.toLocaleString()} <small>/ ${meal.priceUnit === 'portion' ? 'portion' : 'item'}</small></span>
           <span class="meal-rating"><i class="fas fa-star"></i> ${meal.rating}</span>
         </div>
       </div>
@@ -43,7 +43,7 @@ function searchMeals() {
         <h3 class="meal-name">${meal.name}</h3>
         <p class="meal-desc">${meal.desc}</p>
         <div class="meal-footer">
-          <span class="meal-price">N${meal.price.toLocaleString()}</span>
+          <span class="meal-price">N${meal.price.toLocaleString()} <small>/ ${meal.priceUnit === 'portion' ? 'portion' : 'item'}</small></span>
           <span class="meal-rating"><i class="fas fa-star"></i> ${meal.rating}</span>
         </div>
       </div>
